@@ -1,9 +1,11 @@
 <script setup>
+import {User, Lock} from '@element-plus/icons-vue'
 
 </script>
 
+
 <template>
-  <h1>Blank</h1>
+  <router-view/>
 </template>
 
 <style scoped>
