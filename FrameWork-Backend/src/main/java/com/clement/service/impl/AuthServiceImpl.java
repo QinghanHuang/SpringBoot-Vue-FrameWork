@@ -21,6 +21,7 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
     AccountMapper accountMapper;
     @Override
     public UserDetails loadUserByUsername(String username) {
+
         if(username==null) throw new UsernameNotFoundException("Username can't be null");
         Account account= accountMapper.findAccountByUsernameOrEmail(username);
         if(account==null){
