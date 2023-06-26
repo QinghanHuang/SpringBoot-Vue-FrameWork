@@ -10,9 +10,9 @@ import {Lock, User} from "@element-plus/icons-vue";
                 src="https://images.unsplash.com/photo-1614587431569-caafde7537d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"/>
     </div>
     <div class="welcome-title">
-      <div style="font-size: 30px;font-weight: bold">欢迎来到我们的学习平台</div>
-      <div style="margin-top: 10px">在这里你可以学习如何使用Java，如何搭建网站，并且与Java之父密切交流。</div>
-      <div style="margin-top: 5px">在这里你可以同性交友，因为都是男的，没有学Java的女生。</div>
+      <div style="font-size: 30px;font-weight: bold">Welcome to Xxxxx</div>
+      <div style="margin-top: 10px">Xxxxxxxxxxxxxxxxxxx</div>
+      <div style="margin-top: 5px">Xxxxxxxxxxxxxxxxxxxxx</div>
     </div>
     <div style="width: 400px;background-color: white;z-index: 1">
       <router-view/>

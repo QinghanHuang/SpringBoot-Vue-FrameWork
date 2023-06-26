@@ -21,8 +21,11 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.web.cors.*;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -37,30 +40,55 @@ public class SecurityConfig {
     @Resource
     AuthServiceImpl authService;
 
+    @Resource
+    DataSource dataSource;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests((authorize) -> authorize
                         .anyRequest().authenticated()
-                ).formLogin(form -> form
+                )
+                .formLogin(form -> form
                         .loginProcessingUrl("/api/auth/login")
                         .successHandler(this::onAuthenticationSuccess)
                         .failureHandler(this::onAuthenticationFailure)
-                ).logout(logout -> logout
+                )
+                .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(this::onAuthenticationSuccess)
 
-                ).exceptionHandling(entry -> entry
+                )
+                .exceptionHandling(entry -> entry
                         .authenticationEntryPoint(this::onAuthenticationFailure)
-                ).csrf(csrf -> csrf.disable()
-                ).cors(cor -> cor
-                        .configurationSource(this.configurationSource()))
+                )
+                .csrf(csrf -> csrf.disable()
+                )
+                .cors(cor -> cor
+                        .configurationSource(this.configurationSource())
+                )
+                .rememberMe(rem->rem
+                        .rememberMeParameter("remember")
+                        .tokenRepository(persistentTokenRepository())
+                        .tokenValiditySeconds(3600*24*3)
+                )
 
                 .build();
     }
+    //需要设置remember-me token 的存储位置
+    //TODO:能否用redis存储?
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository(){
+        JdbcTokenRepositoryImpl jdbcTokenRepository =new JdbcTokenRepositoryImpl();
+        jdbcTokenRepository.setDataSource(dataSource);
+        //只需要第一次 新建表格
+        jdbcTokenRepository.setCreateTableOnStartup(false);
+        return jdbcTokenRepository;
+    }
+
     //跨域设置
-    private CorsConfigurationSource configurationSource(){
-        CorsConfiguration cors=new CorsConfiguration();
+    private CorsConfigurationSource configurationSource() {
+        CorsConfiguration cors = new CorsConfiguration();
         //开放的前端访问地址
         cors.addAllowedOriginPattern("*");
         //允许 cookie
@@ -71,10 +99,10 @@ public class SecurityConfig {
         //允许方法的类型
         cors.addAllowedMethod("*");
         //新建source
-        UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         //将source 注册 ,所有请求都走这个source ,使用cors config
-        source.registerCorsConfiguration("/**",cors);
+        source.registerCorsConfiguration("/**", cors);
         return source;
     }
 
@@ -93,9 +121,9 @@ public class SecurityConfig {
 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         String success;
-        if(request.getRequestURL().toString().endsWith("logout")){
+        if (request.getRequestURL().toString().endsWith("logout")) {
             success = JSONObject.toJSONString(RestBean.succcess("Log Out Success"));
-        }else{
+        } else {
             success = JSONObject.toJSONString(RestBean.succcess("Log In Success"));
         }
 
