@@ -35,7 +35,7 @@ const login = () => {
   <div style="text-align: center;margin: 0 20px">
     <div style="margin-top: 150px">
       <div style="font-size: 25px;font-weight: bold">Sign In</div>
-      <div style="font-size: 14px;color: grey">Please use a username of email to sign in</div>
+      <div style="font-size: 14px;color: grey">Please use a username or email to sign in</div>
     </div>
     <div style="margin-top: 50px">
       <el-input v-model="form.username" type="text" placeholder="Username/Email">
@@ -68,7 +68,7 @@ const login = () => {
       <span style="color: grey;font-size: 13px">No Account</span>
     </el-divider>
     <div>
-      <el-button style="width: 270px" type="warning" plain>Sign Up</el-button>
+      <el-button style="width: 270px" @click="router.push('/register')" type="warning" plain>Sign Up</el-button>
     </div>
   </div>
 
