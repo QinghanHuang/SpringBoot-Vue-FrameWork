@@ -3,8 +3,11 @@
 import {Lock, User} from "@element-plus/icons-vue";
 import {reactive} from "vue";
 import {ElMessage} from "element-plus";
-import {post} from "@/net/axios";
+import {post,get} from "@/net/axios";
 import router from "@/router";
+import {useStore} from "@/stores/counter";
+
+const store=useStore()
 
 const form = reactive({
   username:'',
@@ -25,6 +28,12 @@ const login = () => {
     remember: form.remember
   },(message)=>{
     ElMessage.success(message)
+    get('/api/user/me', (message) => {
+      store.auth.user = message
+      router.push('/index')
+    }, () => {
+      store.auth.user = null
+    })
     router.push('/index')
   })
 }
@@ -58,7 +67,7 @@ const login = () => {
         <el-checkbox  v-model="form.remember" label="Rememver Me"/>
       </el-col>
       <el-col :span="12" style="text-align: right">
-        <el-link>Forgot Password?</el-link>
+        <el-link @click="router.push('/forget')">Forgot Password?</el-link>
       </el-col>
     </el-row>
     <div style="margin-top: 40px">

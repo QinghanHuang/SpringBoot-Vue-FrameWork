@@ -65,8 +65,8 @@ public class AuthServiceImpl implements AuthService {
      * 5. if success delete kv in redis
      */
     @Override
-    public String sendValidEmail(String email, String sessionId) {
-        String key = "email:" + sessionId + ":" + email;
+    public String sendValidEmail(String email, String sessionId,boolean hasAccount) {
+        String key = "email:" + sessionId + ":" + email+":"+hasAccount ;
         // check cache of redis
         if (Boolean.TRUE.equals(template.hasKey(key))) {
             Long expire = Optional.ofNullable(template.getExpire(key, TimeUnit.SECONDS)).orElse(0L);
@@ -74,9 +74,14 @@ public class AuthServiceImpl implements AuthService {
                 return "Request too frequent, Please try again later";
             }
         }
-        if (accountMapper.findAccountByUsernameOrEmail(email) != null) {
+        Account account = accountMapper.findAccountByUsernameOrEmail(email);
+        // This is for reset password
+        if(hasAccount&&account==null){
+            return "There is no account associated with this email address";
+        }
+        // This is for reset password
+        if(!hasAccount&&account!=null){
             return "This email has already been registered by another user";
-
         }
 
 
@@ -106,13 +111,22 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String validateAndRegister(String username, String password, String email, String code, String sessionId) {
-        String key = "email:" + sessionId + ":" + email;
+        String key = "email:" + sessionId + ":" + email+":"+false;
         if (Boolean.TRUE.equals(template.hasKey(key))) {
             String s = template.opsForValue().get(key);
             if (s == null) return "The verification code has expired. Please obtain it again";
             if (s.equals(code)) {
+
+                //check if this username is occupied
+                Account account=accountMapper.findAccountByUsernameOrEmail(username);
+                if(account!=null){
+                    return "This username is occupied";
+                }
+
                 password = encoder.encode(password);
-                if (accountMapper.creatAccount(username, password, email) > 0) {
+                // remove this code in redis
+                template.delete(key);
+                if (accountMapper.creatAccount(username, password, email) > 0&&accountMapper.creatAccountDetail(username,email)>0) {
                     return null;
                 } else {
                     return "Server Issue";
@@ -123,5 +137,30 @@ public class AuthServiceImpl implements AuthService {
         } else {
             return "Please obtain the email verification code first";
         }
+    }
+
+    @Override
+    public String validateOnly(String email, String code, String sessionId) {
+        String key = "email:" + sessionId + ":" + email+":"+true;
+        if (Boolean.TRUE.equals(template.hasKey(key))) {
+            String s = template.opsForValue().get(key);
+            if (s == null) return "The verification code has expired. Please obtain it again";
+            if (s.equals(code)) {
+                // remove this code in redis
+                template.delete(key);
+                return null;
+            } else {
+                return "Incorrect verification code";
+            }
+        } else {
+            return "Please obtain the email verification code first";
+        }
+
+    }
+
+    @Override
+    public boolean resetPassword(String email, String password) {
+        password=encoder.encode(password);
+        return accountMapper.resetPassword(email,password)>0;
     }
 }
